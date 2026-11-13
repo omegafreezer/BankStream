@@ -1,101 +1,199 @@
-# BankStream — Banking Transaction Data Engineering Platform
+# BankStream – Banking Transaction Data Engineering Platform
 
-A locally runnable portfolio project demonstrating batch data ingestion, incremental ETL, data cleaning, validation, rejected-record quarantine, relational loading, anomaly flagging, SQL analytics, and Power BI-ready reporting.
+A Python-based data engineering project that processes banking transaction data through an ETL pipeline, performs data quality checks, and identifies unusual transaction patterns.
 
-**Data disclaimer:** All generated records are synthetic. This is a learning/portfolio simulation, not a real bank system.
+## Overview
 
-## 1. Run locally (SQLite; no database server needed)
+BankStream is designed to demonstrate how structured banking data can be collected, cleaned, transformed, validated, and stored efficiently.
 
-Requires Python 3.10+.
+The project processes customer, account, and transaction records from CSV files. It uses Python and Pandas for data processing, SQL for database operations, and an incremental loading approach to prevent duplicate transaction records.
 
-```bash
-python -m venv .venv
-# Windows:
-.venv\\Scripts\\activate
-# macOS/Linux:
-source .venv/bin/activate
+It also includes data validation and rule-based anomaly detection to improve data reliability and identify potentially unusual transactions.
 
-pip install -r requirements.txt
-python generate_data.py
-python run_pipeline.py
-python -m unittest discover -s tests -v
+## Key Features
+
+- **Data Ingestion:** Reads customer, account, and transaction records from structured CSV files.
+- **ETL Pipeline:** Performs data extraction, cleaning, transformation, and loading using Python and Pandas.
+- **Incremental Loading:** Processes new transactions while preventing duplicate records.
+- **Data Quality Checks:** Identifies missing values, invalid records, duplicates, and data inconsistencies.
+- **Anomaly Detection:** Flags unusual transactions based on high-value and high-frequency transaction patterns.
+- **Relational Data Modeling:** Organizes banking data into structured relational tables.
+- **SQL Analytics:** Provides reusable SQL queries for transaction analysis and reporting.
+- **Execution Reports:** Tracks processed records, rejected records, and detected anomalies.
+
+## Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Programming | Python |
+| Data Processing | Pandas, NumPy |
+| Database | SQLite, MySQL (optional configuration) |
+| Query Language | SQL |
+| Data Pipeline | ETL, Incremental Loading |
+| Data Quality | Validation, Duplicate Detection |
+| Version Control | Git, GitHub |
+
+## Project Architecture
+
+```text
+              Banking CSV Data
+                     |
+                     v
+              Data Ingestion
+                     |
+                     v
+             Data Transformation
+             (Python + Pandas)
+                     |
+                     v
+              Data Validation
+                     |
+              +------+------+
+              |             |
+              v             v
+         Valid Records   Rejected Records
+              |
+              v
+        Incremental Loading
+              |
+              v
+         Relational Database
+              |
+              v
+          SQL Analytics
+              |
+              v
+       Anomaly Detection
+              |
+              v
+        Execution Reports
 ```
 
-Run `python run_pipeline.py` a second time. Previously loaded transaction IDs should be skipped, demonstrating idempotent incremental loading.
+## Project Structure
 
-## MySQL option (optional)
+```text
+BankStream/
+│
+├── bankstream/
+│   ├── config.py
+│   ├── ingest.py
+│   ├── transform.py
+│   ├── quality.py
+│   ├── db.py
+│   ├── load.py
+│   └── pipeline.py
+│
+├── data/
+│   └── raw/
+│
+├── reports/
+│   └── POWER_BI_GUIDE.md
+│
+├── sql/
+│   ├── schema.sql
+│   └── analytics.sql
+│
+├── tests/
+│   └── test_transform.py
+│
+├── generate_data.py
+├── run_pipeline.py
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+└── README.md
+```
 
-The default SQLite configuration is easiest for a first run. To use MySQL:
-1. Start Docker Desktop.
-2. Run `docker compose up -d` from the project folder.
-3. Copy `.env.example` to `.env`.
-4. Set `DB_TYPE=mysql` and match the MySQL credentials in `.env` to `docker-compose.yml`.
-5. Install dependencies with `pip install -r requirements.txt`.
-6. Run `python generate_data.py` and `python run_pipeline.py`.
+## Getting Started
 
-## 2. What the pipeline does
+### 1. Clone the Repository
 
-1. Reads branch, customer, account, and transaction CSV files.
-2. Standardizes IDs, text fields, timestamps, and numeric amounts.
-3. Validates required fields, positive amounts, timestamps, transaction types/statuses, and account references.
-4. Writes invalid rows and rejection reasons to `data/quarantine/`.
-5. Flags high-value and high-frequency transactions for review; flags are not fraud determinations.
-6. Loads valid records into SQLite tables with primary/foreign keys.
-7. Exports analytical CSVs into `reports/` for Power BI.
+```bash
+git clone https://github.com/omegafreezer/BankStream.git
 
-## 3. Data model
+cd BankStream
+```
 
-- `branches`: branch details
-- `customers`: customer details and segment
-- `accounts`: customer/branch relationship and account type
-- `transactions`: transaction facts, status, channel, anomaly flag, source file, load timestamp
+### 2. Create a Virtual Environment
 
-Relationships: one customer can own multiple accounts; one branch can service multiple accounts; one account can have multiple transactions.
+**Windows:**
 
-## 4. Outputs
+```powershell
+py -m venv venv
 
-- `data/bankstream.db` — SQLite database (default; MySQL is optional)
-- `data/processed/` — standardized, accepted transaction batch
-- `data/quarantine/` — rejected records with reasons
-- `reports/latest_run_summary.json` — run-level counts
-- `reports/daily_transaction_summary.csv`
-- `reports/channel_performance.csv`
-- `reports/branch_performance.csv`
-- `reports/data_quality_summary.csv`
+.\venv\Scripts\Activate.ps1
+```
 
-## 5. Power BI dashboard
+**Linux / macOS:**
 
-Import the four report CSVs from `reports/` into Power BI Desktop. Suggested visuals:
-- KPI cards: loaded transaction count, transaction value, flagged anomalies, rejected rows
-- Line chart: daily transaction count/value
-- Bar chart: transaction value by channel
-- Bar chart: transaction value by branch
-- Table: channel, transaction count, value, anomaly count
-- Data-quality summary card
+```bash
+python3 -m venv venv
 
-See `reports/POWER_BI_GUIDE.md`.
+source venv/bin/activate
+```
 
-## 6. SQL
+### 3. Install Dependencies
 
-`sql/schema.sql` contains the relational schema. `sql/analytics.sql` contains reusable analytical queries/views for a MySQL-compatible environment. The Python pipeline creates its SQLite schema automatically.
+```bash
+python -m pip install -r requirements.txt
+```
 
-## 7. Interview preparation
+### 4. Generate Sample Banking Data
 
-Be able to explain:
-- Why data validation occurs before loading
-- Why invalid rows are quarantined rather than silently dropped
-- How transaction IDs make repeat runs idempotent
-- Difference between rejecting a bad record and flagging a suspicious one
-- Primary/foreign keys and the relational model
-- How SQL views and report extracts support analytics
-- Limitations of batch processing versus streaming
+```bash
+python generate_data.py
+```
 
-## 8. Resume wording — only after you run and understand the project
+This generates synthetic customer, account, and transaction datasets for pipeline execution.
 
-**BankStream — Banking Transaction Data Engineering Platform | Python, Pandas, SQL, SQLite/MySQL, Power BI, Git**
-- Built a batch ETL pipeline to ingest, standardize, validate, and incrementally load synthetic banking transaction data into a relational database.
-- Implemented duplicate handling, data-quality checks, rejected-record quarantine, and configurable anomaly flags.
-- Designed a relational schema and analytical SQL queries for transaction trends, customer activity, and branch/channel performance.
-- Generated Power BI-ready reporting extracts for transaction volume, value, channel mix, and data-quality monitoring.
+### 5. Execute the ETL Pipeline
 
-Do not claim MySQL, Power BI, cloud, or production-scale performance until you have actually configured, used, and can demonstrate those components.
+```bash
+python run_pipeline.py
+```
+
+The pipeline performs ingestion, transformation, data validation, database loading, and anomaly detection.
+
+## Database Support
+
+BankStream uses SQLite as its default database configuration, allowing the pipeline to run locally without requiring a separate database server.
+
+MySQL support is also included as an optional configuration using the provided database connection settings and Docker Compose setup.
+
+## SQL Analytics
+
+The project includes reusable SQL queries for exploring banking transaction data, including:
+
+- Transaction volume and value analysis.
+- Customer and account activity.
+- Transaction trends.
+- Identification of unusual transaction patterns.
+- Data quality and pipeline monitoring.
+
+Refer to the `sql/analytics.sql` file for the available analytical queries.
+
+## Sample Data
+
+The project uses synthetic banking datasets generated specifically for development and testing.
+
+No real customer information, financial records, or sensitive banking data is used.
+
+## Future Improvements
+
+- Integrate a fully configured MySQL database.
+- Build interactive Power BI dashboards for transaction analysis.
+- Introduce more advanced anomaly detection techniques.
+- Implement automated pipeline scheduling.
+- Extend the pipeline with cloud-based data storage and processing.
+
+## Learning Outcomes
+
+Through this project, I explored practical data engineering concepts, including ETL pipeline development, incremental data processing, relational database design, SQL analytics, data validation, and transaction anomaly detection.
+
+## Author
+
+**Saksham Singh**
+
+- GitHub: [@omegafreezer](https://github.com/omegafreezer)
+- Project Repository: [BankStream](https://github.com/omegafreezer/BankStream)
