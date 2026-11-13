@@ -1,0 +1,10 @@
+{
+  "started_at": "2026-11-13T21:34:42",
+  "finished_at": "2026-11-13T21:34:43",
+  "source_rows": 2003,
+  "new_rows": 2003,
+  "loaded_rows_this_run": 2000,
+  "rejected_rows_this_run": 3,
+  "previously_loaded_rows_skipped": 0,
+  "anomaly_flags_this_run": 14
+}

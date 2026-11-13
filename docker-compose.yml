@@ -1,0 +1,16 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: bankstream-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_change_me
+      MYSQL_DATABASE: bankstream
+      MYSQL_USER: bankstream
+      MYSQL_PASSWORD: bankstream_change_me
+    ports:
+      - "3306:3306"
+    volumes:
+      - bankstream_mysql:/var/lib/mysql
+volumes:
+  bankstream_mysql:

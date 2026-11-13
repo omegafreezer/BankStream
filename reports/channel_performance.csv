@@ -1,0 +1,6 @@
+channel,txn_count,total_amount,anomaly_count
+UPI,417,1745441.42,2
+NetBanking,410,1694414.19,0
+Branch,402,1731318.82,5
+POS,401,1639359.95,3
+ATM,370,1576298.94,4
